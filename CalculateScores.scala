@@ -16,15 +16,17 @@
  * Notes:       Non-concurrent version
  */
 
-object CalculateScores {
+object CalculateScores 
+{
   /**
    * Main method where command line argument is taken in and creates a new instance of Test class where all the
    * operations are performed
    */
-  def main(args:Array[String]):Unit = {
-    val myTest = new Test()
+  def main(args:Array[String]):Unit = 
+  {
+    val myTest = new Test(args(0))
     myTest.getK()
-    myTest.run(args(0))
+    myTest.superRun()
     myTest.printAll()
     myTest.printCategories()
     myTest.getStats()
