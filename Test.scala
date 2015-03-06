@@ -16,9 +16,27 @@
  * Notes:       Non-concurrent version
  */
 
+import scala.actors.Actor
 import scala.actors.Actor._
 import scala.io.Source
 import scala.collection.mutable._
+
+case object Ping
+case object Pong
+case object Stop
+
+class HelloActor extends Actor 
+{
+	def act() 
+	{
+		receive
+		{
+			case "hello" => println("woah")
+			case _ => println("noooo")
+		}
+			
+	}
+}
 
 class Test {
   private var myPQ = PriorityQueue[String]()(Ordering.by(doThis))
@@ -81,8 +99,13 @@ class Test {
    */
   def run(fileName:String):Unit = {
     println("Opening file: " + fileName)
+    val pong = new HelloActor
+    pong ! "hello"
+    pong ! _
+    println("Your actor!")
 
-    for(line <- Source.fromFile(fileName).getLines()) {
+    for(line <- Source.fromFile(fileName).getLines()) 
+    {
       if(populationSize < numK) {
         myPQ+=line
         checkIfUnique(line)
