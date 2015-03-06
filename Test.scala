@@ -20,28 +20,17 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.io.Source
 import scala.collection.mutable._
+case object ReaderMessage
 
-class HelloActor extends Actor 
+class Test (aFile:String) 
 {
-	def act() 
-	{
-		receive
-		{
-			case "hello" => println("woah")
-			case _ => println("noooo")
-		}
-			
-	}
-}
-
-class Test {
   private var myPQ = PriorityQueue[String]()(Ordering.by(doThis))
   private var numK:Int = 0
   private var populationSize:Int = 0
   private var draws:Int = 0
   private var myCategoryList:List[Category] = List()
   private var myStringList:List[String] = List()
-
+  private val fileName = aFile
   /**
    * Method that splits a string seperated by a tab, converts the first part to a double and returns it
    */
@@ -90,36 +79,71 @@ class Test {
     }
   }
 
+
+  def superRun():Unit = 
+  {
+  	val lsize = io.Source.fromFile(fileName).getLines.size
+    val half = lsize / 2
+  	val fhalf_actor = new Readers
+  	println("one")
+  	fhalf_actor.start
+  	fhalf_actor ! ReaderMessage
+  	receive 
+  	{
+  		case ReaderMessage => 
+  	}
+  }
+
+    class Readers extends Actor 
+	{
+		def act
+		{
+		while (true) 
+		{
+			receive
+			{
+				case ReaderMessage => 
+				run()
+				reply
+				{
+					ReaderMessage
+				}
+				exit()
+			}
+		}}
+	} 
+
   /**
    * Method that streams the file input and creates the binary max heap of the data points based on their values
    */
-  def run(fileName:String):Unit = {
-    println("Opening file: " + fileName)
-    val pong = new HelloActor
-    pong ! "hello"
-    pong ! _
-    println("Your actor!")
 
-    for(line <- Source.fromFile(fileName).getLines()) 
-    {
-      if(populationSize < numK) {
-        myPQ+=line
-        checkIfUnique(line)
-      }
-      else {
+   def run():Unit = 
+   {
+    println("Opening file: " + fileName)
+ 	 for(line <- Source.fromFile(fileName).getLines()) 
+  	 { 
+        if(populationSize < numK) 
+        {
+        	myPQ+=line
+        	checkIfUnique(line)
+    	}
+      else 
+      {
         myPQ+=line
         checkIfUnique(line)
         myPQ = myPQ.filterNot(it => it == myPQ.min)
       }
-
       populationSize+=1
-    }
-  }
+  	}
+   }
+
 
   /**
    * Method that prints all the values in the binary max heap (tail recursive)
    */
-  def printAll():Unit= {
+  def printAll():Unit= 
+  {
+  	println("My results:")
     printPQ(myPQ)
 
     def printPQ(it:PriorityQueue[String]):Unit = {
