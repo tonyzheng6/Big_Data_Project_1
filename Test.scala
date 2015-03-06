@@ -20,11 +20,14 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.io.Source
 import scala.collection.mutable._
-case object ReaderMessage
+case object ReaderMessageOdd
+case object ReaderMessageEven
+case object UniqueEndMessage
 
 class Test (aFile:String) 
 {
-  private var myPQ = PriorityQueue[String]()(Ordering.by(doThis))
+  private var myPQE = PriorityQueue[String]()(Ordering.by(doThis))
+  private var myPQO = PriorityQueue[String]()(Ordering.by(doThis))
   private var numK:Int = 0
   private var populationSize:Int = 0
   private var draws:Int = 0
@@ -85,12 +88,15 @@ class Test (aFile:String)
   	val lsize = io.Source.fromFile(fileName).getLines.size
     val half = lsize / 2
   	val fhalf_actor = new Readers
-  	println("one")
+  	val shalf_actor = new Readers
   	fhalf_actor.start
-  	fhalf_actor ! ReaderMessage
+  	shalf_actor.start
+  	fhalf_actor ! ReaderMessageEven
+  	shalf_actor ! ReaderMessageOdd
+
   	receive 
   	{
-  		case ReaderMessage => 
+  		case UniqueEndMessage
   	}
   }
 
@@ -102,12 +108,26 @@ class Test (aFile:String)
 		{
 			receive
 			{
-				case ReaderMessage => 
-				run()
+				case ReaderMessageEven => 
+				runEven()
+				shalf_actor ! UniqueEndMessage
+
+				case ReaderMessageOdd =>
+				runOdd()
+				fhalf_actor ! UniqueEndMessage
+
+				case UniqueEndMessage =>
 				reply
 				{
-					ReaderMessage
+					UniqueEndMessage
 				}
+				exit()
+				/*
+				TODO: check to see what wait does
+				how do i get the program to wait for the
+				actors to finish what they're doing?
+				this won't work
+				*/
 				exit()
 			}
 		}}
@@ -117,23 +137,55 @@ class Test (aFile:String)
    * Method that streams the file input and creates the binary max heap of the data points based on their values
    */
 
-   def run():Unit = 
+   def runOdd():Unit = 
    {
     println("Opening file: " + fileName)
+    var count = 0;
  	 for(line <- Source.fromFile(fileName).getLines()) 
   	 { 
+  	 	if (count % 2 == 1){
+  	 	println("odd")
+  	 	println(line)
         if(populationSize < numK) 
         {
-        	myPQ+=line
+        	myPQO+=line
         	checkIfUnique(line)
     	}
       else 
       {
-        myPQ+=line
+        myPQO+=line
         checkIfUnique(line)
-        myPQ = myPQ.filterNot(it => it == myPQ.min)
-      }
+        myPQO = myPQO.filterNot(it => it == myPQO.min)
+      }}
+      count = count + 1
       populationSize+=1
+  	}
+   }
+
+   def runEven():Unit = 
+   {
+    println("Opening file: " + fileName)
+    var count = 0;
+ 	 for(line <- Source.fromFile(fileName).getLines()) 
+  	 { 
+  	 	if(count % 2 == 0){
+  	 	println("even")
+  	 	println(line)
+        if(populationSize < numK) 
+        {
+        	myPQE+=line
+        	checkIfUnique(line)
+    	}
+      else 
+      {
+        myPQE+=line
+        checkIfUnique(line)
+        myPQE = myPQE.filterNot(it => it == myPQE.min)
+      }}
+      count = count + 1
+      populationSize+=1
+      if (count == 5)
+      	return
   	}
    }
 
@@ -144,7 +196,8 @@ class Test (aFile:String)
   def printAll():Unit= 
   {
   	println("My results:")
-    printPQ(myPQ)
+    printPQ(myPQE)
+    printPQ(myPQO)
 
     def printPQ(it:PriorityQueue[String]):Unit = {
       if (it.isEmpty) {
@@ -183,7 +236,7 @@ class Test (aFile:String)
         traversePQ(it.tail, counter)
       }
     }
-    return traversePQ(myPQ, 0)
+    return traversePQ(myPQE, 0)
   }
 
   /**
