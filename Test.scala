@@ -117,10 +117,7 @@ class Test (aFile:String)
 				fhalf_actor ! UniqueEndMessage
 
 				case UniqueEndMessage =>
-				reply
-				{
-					UniqueEndMessage
-				}
+				
 				exit()
 				/*
 				TODO: check to see what wait does
