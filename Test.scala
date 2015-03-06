@@ -22,12 +22,12 @@ import scala.io.Source
 import scala.collection.mutable._
 case object ReaderMessageOdd
 case object ReaderMessageEven
-case object UniqueEndMessage
 
 class Test (aFile:String) 
 {
   private var myPQE = PriorityQueue[String]()(Ordering.by(doThis))
   private var myPQO = PriorityQueue[String]()(Ordering.by(doThis))
+  private var myPQF = PriorityQueue[String]()(Ordering.by(doThis))
   private var numK:Int = 0
   private var populationSize:Int = 0
   private var draws:Int = 0
@@ -64,6 +64,129 @@ class Test (aFile:String)
     }
   }
 
+  def superRun():Unit = 
+  {
+  	var count = 0
+  	val fhalf_actor = new Readers
+  	val shalf_actor = new Readers
+  	fhalf_actor.start
+  	shalf_actor.start
+  	fhalf_actor ! ReaderMessageEven
+  	shalf_actor ! ReaderMessageOdd
+
+  	receive 
+  	{
+  		case UniqueEndMessage => count+=1
+  	}
+  	receive
+  	{
+  		case UniqueEndMessage => count+=1
+  	}
+  	combineQueues()
+  }
+
+    class Readers extends Actor 
+	{
+		def act
+		{
+		while (true) 
+		{
+			receive
+			{
+				case ReaderMessageEven => 
+				runEven()
+				reply { UniqueEndMessage }
+				exit()
+				case ReaderMessageOdd =>
+				runOdd()
+				reply { UniqueEndMessage }
+				exit()
+				/*
+				TODO: check to see what wait does
+				how do i get the program to wait for the
+				actors to finish what they
+				*/
+			}
+		}}
+	} 
+
+  /**
+   * Method that streams the file input and creates the binary max heap of the data points based on their values
+   */
+
+   def combineQueues():Unit = 
+   {
+   	var count = numK
+   	var temp = 0
+   	while(temp == 0)
+   	{
+   		if(myPQE.size != 0)
+   		{
+   			var eventemp = myPQE.dequeue
+   			checkIfUnique(eventemp)
+   			myPQF += eventemp
+   		}
+   		else if(myPQO.size != 0)
+   		{
+   			var oddtemp = myPQO.dequeue
+   			checkIfUnique(oddtemp)
+   			myPQF += oddtemp
+   		}
+   		else
+   			temp = 1
+   	}
+   	while(myPQF.size != numK)
+   	{
+      myPQF = myPQF.filterNot(it => it == myPQF.min)
+    }
+   }
+
+  def runOdd():Unit = 
+   {
+    var count = 0;
+ 	for(line <- Source.fromFile(fileName).getLines()) 
+  	{ 
+  	 	if (count % 2 == 1)
+  	 	{
+     	   if(count <= numK) 
+     	   {
+     		   	myPQO+=line
+    		}
+			else 
+        	{
+       		  myPQO += line
+       		  checkIfUnique(line)
+      		  myPQO = myPQO.filterNot(it => it == myPQO.min)
+      		}
+      	}
+      count = count + 1
+  	}
+   }
+
+   def runEven():Unit = 
+   {
+    var count = 0;
+ 	 for(line <- Source.fromFile(fileName).getLines()) 
+  	 { 
+  	 	if(count % 2 == 0){
+        if(populationSize <= numK) 
+        {
+        	myPQE+=line
+    	}
+      else 
+      {
+      	println(line)
+
+        myPQE+=line
+        checkIfUnique(line)
+        myPQE = myPQE.filterNot(it => it == myPQE.min)
+      }}
+      count = count + 1
+      populationSize+=1
+  	}
+   }
+
+
   /**
    * Method that checks if the file input belongs to a category and increments the successes if it does, else creates a
    * new category and places it into a list
@@ -82,117 +205,17 @@ class Test (aFile:String)
     }
   }
 
-
-  def superRun():Unit = 
-  {
-  	val lsize = io.Source.fromFile(fileName).getLines.size
-    val half = lsize / 2
-  	val fhalf_actor = new Readers
-  	val shalf_actor = new Readers
-  	fhalf_actor.start
-  	shalf_actor.start
-  	fhalf_actor ! ReaderMessageEven
-  	shalf_actor ! ReaderMessageOdd
-
-  	receive 
-  	{
-  		case UniqueEndMessage =>
-  	}
-  }
-
-    class Readers extends Actor 
-	{
-		def act
-		{
-		while (true) 
-		{
-			receive
-			{
-				case ReaderMessageEven => 
-				runEven()
-				reply
-				{UniqueEndMessage}
-				exit()
-				case ReaderMessageOdd =>
-				runOdd()
-				reply 
-				{UniqueEndMessage}				
-				exit()
-				/*
-				TODO: check to see what wait does
-				how do i get the program to wait for the
-				actors to finish what they're doing?
-				this won't work
-				*/
-			}
-		}}
-	} 
-
-  /**
-   * Method that streams the file input and creates the binary max heap of the data points based on their values
-   */
-
-   def runOdd():Unit = 
-   {
-    println("Opening file: " + fileName)
-    var count = 0;
- 	 for(line <- Source.fromFile(fileName).getLines()) 
-  	 { 
-  	 	if (count % 2 == 1){
-  	 	println("odd")
-  	 	println(line)
-        if(populationSize < numK) 
-        {
-        	myPQO+=line
-        	checkIfUnique(line)
-    	}
-      else 
-      {
-        myPQO+=line
-        checkIfUnique(line)
-        myPQO = myPQO.filterNot(it => it == myPQO.min)
-      }}
-      count = count + 1
-      populationSize+=1
-  	}
-   }
-
-   def runEven():Unit = 
-   {
-    println("Opening file: " + fileName)
-    var count = 0;
- 	 for(line <- Source.fromFile(fileName).getLines()) 
-  	 { 
-  	 	if(count % 2 == 0){
-  	 	println("even")
-  	 	println(line)
-        if(populationSize < numK) 
-        {
-        	myPQE+=line
-        	checkIfUnique(line)
-    	}
-      else 
-      {
-        myPQE+=line
-        checkIfUnique(line)
-        myPQE = myPQE.filterNot(it => it == myPQE.min)
-      }}
-      count = count + 1
-      populationSize+=1
-      if (count == 5)
-      	return
-  	}
-   }
-
-
   /**
    * Method that prints all the values in the binary max heap (tail recursive)
    */
   def printAll():Unit= 
   {
-  	println("My results:")
+  	println("My results: Even")
     printPQ(myPQE)
+  	println("My results: Odd")
     printPQ(myPQO)
+    println("My results: Final")
+    printPQ(myPQF)
 
     def printPQ(it:PriorityQueue[String]):Unit = {
       if (it.isEmpty) {
@@ -231,7 +254,7 @@ class Test (aFile:String)
         traversePQ(it.tail, counter)
       }
     }
-    return traversePQ(myPQE, 0)
+    return traversePQ(myPQF, 0)
   }
 
   /**
