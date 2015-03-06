@@ -21,8 +21,6 @@ import scala.actors.Actor._
 import scala.io.Source
 import scala.collection.mutable._
 
-case object 
-
 class HelloActor extends Actor 
 {
 	def act() 
