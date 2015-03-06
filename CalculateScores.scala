@@ -27,8 +27,10 @@ object CalculateScores
     val myTest = new Test(args(0))
     myTest.getK()
     myTest.superRun()
+
     myTest.printAll()
     myTest.printCategories()
+    
     myTest.getStats()
     myTest.sortList()
   }
