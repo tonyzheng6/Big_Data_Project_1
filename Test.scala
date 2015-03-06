@@ -96,7 +96,7 @@ class Test (aFile:String)
 
   	receive 
   	{
-  		case UniqueEndMessage
+  		case UniqueEndMessage =>
   	}
   }
 
@@ -110,14 +110,13 @@ class Test (aFile:String)
 			{
 				case ReaderMessageEven => 
 				runEven()
-				shalf_actor ! UniqueEndMessage
-
+				reply
+				{UniqueEndMessage}
+				exit()
 				case ReaderMessageOdd =>
 				runOdd()
-				fhalf_actor ! UniqueEndMessage
-
-				case UniqueEndMessage =>
-				
+				reply 
+				{UniqueEndMessage}				
 				exit()
 				/*
 				TODO: check to see what wait does
@@ -125,7 +124,6 @@ class Test (aFile:String)
 				actors to finish what they're doing?
 				this won't work
 				*/
-				exit()
 			}
 		}}
 	} 
