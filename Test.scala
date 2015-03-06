@@ -21,9 +21,7 @@ import scala.actors.Actor._
 import scala.io.Source
 import scala.collection.mutable._
 
-case object Ping
-case object Pong
-case object Stop
+case object 
 
 class HelloActor extends Actor 
 {
