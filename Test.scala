@@ -33,7 +33,6 @@ class Test (aFile:String)
   private var draws:Int = 0
   private var myCategoryList:List[Category] = List()
   private var myOddCategoryList:List[Category] = List()
-
   private var myStringListEven:List[String] = List()
   private var myStringListOdd:List[String] = List()
 
@@ -387,11 +386,116 @@ class Test (aFile:String)
    * Method that declares and prints out a sorted list of categories based on hyper-geometric distribution
    */
   def sortList():Unit = {
-    myCategoryList = mergeSort(myCategoryList)
-
-    for(x <- myCategoryList)
+  	var pirate = new Array[Category](3) 
+    myCategoryList.toArray(pirate)
+	
+	var startSorting = new Starter(pirate)
+	startSorting.start
+    startSorting ! Begin
+    
+    for(x <- pirate)
     {
       println(x.getName() + " Geometric : " + x.getHypergeometricDistribution())
     }
   }
+
+ abstract class SortArray 
+ case object Sort extends SortArray
+ case object FinishedSubArraySorting extends SortArray
+ case object Begin extends SortArray
+
+ class Starter(toBeSorted :Array[Category]) extends Actor{
+   def act(){
+     var first:Array[Category] = Array()
+     var second:Array[Category] = Array()
+    loop{
+      react{
+    case Begin =>
+      var SortActor = new MergeSort(toBeSorted,self)
+      SortActor.start
+      SortActor ! Sort
+    case sortedArray :Array[Int] =>
+         var i = 0
+         println("Sortat:")
+         for( i <- 0 to sortedArray.length - 1){
+             println(">"+sortedArray(i))
+         }
+      }
+    }
+   }
+ }
+
+ class MergeSort(toBeSorted :Array[Category],parent:Actor) extends Actor{
+   def act(){
+  var finishedSorting = 0
+  var thisArray = toBeSorted
+  var first:Array[Category] = Array();
+  var second:Array[Category] = Array();
+  var sortedSubArrays = 0;
+  loop{
+    react{
+      case Sort =>
+        if(thisArray.length == 1){
+          finishedSorting = 1
+          println(this + " sending up "+thisArray.mkString("[",",","]"))
+          parent ! thisArray
+          exit('stop)
+        }else{
+          first = thisArray.slice(0,thisArray.length/2)
+          second = thisArray.slice(thisArray.length/2,thisArray.length)
+          var firstSort = new MergeSort(first,self)
+          var secondSort = new MergeSort(second,self)
+          firstSort.start
+          secondSort.start
+          firstSort ! Sort
+          secondSort ! Sort
+        }
+      case subSortedArray:Array[Category] =>
+        println(this + " received " + subSortedArray.mkString("[",",","]"))
+        sortedSubArrays = sortedSubArrays + 1
+        if(sortedSubArrays == 1){
+            first = subSortedArray
+        }else{
+          second = subSortedArray
+          thisArray = merge(first,second)
+          finishedSorting = 1
+          parent ! thisArray
+          exit('stop)
+        }
+    }
+  }
+   }
+
+   def merge(firstArray :Array[Category],secondArray :Array[Category]):Array[Category] = {
+
+var result:Array[Category] = new Array[Category](firstArray.length + secondArray.length)
+var i = 0
+var j = 0
+var k = 0
+while(i < firstArray.length && j < secondArray.length){
+  if(firstArray(i) <= secondArray(j)){
+    result(k) = firstArray(i)
+    i = i + 1
+  }else{
+    result(k) = secondArray(j)
+    j = j + 1
+  }
+  k = k + 1
+}
+while (i < firstArray.length)
+{
+    result(k) = firstArray(i)
+    i = i + 1
+    k = k + 1
+}
+while (j < secondArray.length)
+{
+    result(k) = secondArray(j)
+    j = j + 1
+    k = k + 1
+}
+return result
+ }
+}
+
 }
