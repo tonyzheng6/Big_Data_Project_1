@@ -28,6 +28,14 @@ class Category {
     this.name = name
   }
 
+  def <=(other:Category): Boolean = 
+  {
+  	if (this.hypergeometricDistribution <= other.hypergeometricDistribution)
+  		return true
+  	else
+  		return false
+  }
+
   /**
    * Getter for name
    */
