@@ -42,10 +42,6 @@ class Category {
     this.count = count
   }
 
-  def setCountAdd(count:Int):Unit = {
-  	this.count += count
-  }
-
   /**
    * Getter for count
    */
