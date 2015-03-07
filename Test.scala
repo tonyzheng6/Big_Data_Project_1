@@ -120,7 +120,6 @@ class Test (aFile:String)
 
    def combineQueues():Unit = 
    {
-   	printAll()
    	combineLists()
    	var count = numK
    	var temp = 0
@@ -146,19 +145,23 @@ class Test (aFile:String)
    }
 
   def runOdd():Unit = 
-   {
+  {
     var count = 0;
+    var temp = 0;
  	for(line <- Source.fromFile(fileName).getLines()) 
   	{ 
   	 	if (count % 2 == 1)
   	 	{
-     	   if(count <= numK) 
+  	 	//	println("odd:", line)
+     	   if(temp <= numK) 
      	   {
      		   	myPQO+=line
      		   	checkIfUniqueOdd(line)
+     		   	temp+=1
     		}
 			else 
         	{
+        		println(line)
        		  myPQO += line
        		  checkIfUniqueOdd(line)
       		  myPQO = myPQO.filterNot(it => it == myPQO.min)
@@ -166,29 +169,33 @@ class Test (aFile:String)
       	}
       count = count + 1
   	}
-   }
+  }
 
-   def runEven():Unit = 
-   {
-    var count = 0;
+    def runEven():Unit = 
+    {
+   	 var temp = 0;
  	 for(line <- Source.fromFile(fileName).getLines()) 
   	 { 
-  	 	if(count % 2 == 0){
-        if(populationSize <= numK) 
-        {
+  	 	if(populationSize % 2 == 0)
+  	 	{
+  	 	//	println("even:", line)  	 		
+        	if(temp <= numK) 
+       		{
+       	 		myPQE+=line
+        		checkIfUniqueEven(line)
+        		temp+=1
+    		}
+      		else 
+     		{
         	myPQE+=line
         	checkIfUniqueEven(line)
-    	}
-      else 
-      {
-        myPQE+=line
-        checkIfUniqueEven(line)
-        myPQE = myPQE.filterNot(it => it == myPQE.min)
-      }}
-      count = count + 1
+        	myPQE = myPQE.filterNot(it => it == myPQE.min)
+      		}
+      	}
       populationSize+=1
+      }
   	}
-   }
+
 
 
   /**
@@ -238,14 +245,15 @@ class Test (aFile:String)
 	      val myCategory = new Category()
 	      myCategory.setName(tempname)
 	      myCategory.setCount(tempcount)
-	      myCategoryList = myCategoryList:+myCategory  			
+	      myCategoryList = myCategoryList:+myCategory  	
+	      println(tempname,tempcount)		
   		}
-  		  		
+  		else{  		  		
   		while(countEven < myCategoryList.size)
   		{
   			myCategoryList(countEven).compare(myOddCategoryList(countOdd))
   			countEven += 1
-  		}
+  		}}
   		countEven = 0
   		countOdd += 1
   	}
