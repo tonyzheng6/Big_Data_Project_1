@@ -42,11 +42,22 @@ class Category {
     this.count = count
   }
 
+  def setCountAdd(count:Int):Unit = {
+  	this.count += count
+  }
+
   /**
    * Getter for count
    */
   def getCount():Int = {
     return count
+  }
+
+  def compare(other:Category) = {
+  	if (other.name == this.name)
+  	{
+  		this.count += other.count
+  	}
   }
 
   /**

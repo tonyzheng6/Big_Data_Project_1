@@ -32,7 +32,11 @@ class Test (aFile:String)
   private var populationSize:Int = 0
   private var draws:Int = 0
   private var myCategoryList:List[Category] = List()
-  private var myStringList:List[String] = List()
+  private var myOddCategoryList:List[Category] = List()
+
+  private var myStringListEven:List[String] = List()
+  private var myStringListOdd:List[String] = List()
+
   private val fileName = aFile
   /**
    * Method that splits a string seperated by a tab, converts the first part to a double and returns it
@@ -116,6 +120,8 @@ class Test (aFile:String)
 
    def combineQueues():Unit = 
    {
+   	printAll()
+   	combineLists()
    	var count = numK
    	var temp = 0
    	while(temp == 0)
@@ -123,13 +129,11 @@ class Test (aFile:String)
    		if(myPQE.size != 0)
    		{
    			var eventemp = myPQE.dequeue
-   			checkIfUnique(eventemp)
    			myPQF += eventemp
    		}
    		else if(myPQO.size != 0)
    		{
    			var oddtemp = myPQO.dequeue
-   			checkIfUnique(oddtemp)
    			myPQF += oddtemp
    		}
    		else
@@ -151,11 +155,12 @@ class Test (aFile:String)
      	   if(count <= numK) 
      	   {
      		   	myPQO+=line
+     		   	checkIfUniqueOdd(line)
     		}
 			else 
         	{
        		  myPQO += line
-       		  checkIfUnique(line)
+       		  checkIfUniqueOdd(line)
       		  myPQO = myPQO.filterNot(it => it == myPQO.min)
       		}
       	}
@@ -172,13 +177,12 @@ class Test (aFile:String)
         if(populationSize <= numK) 
         {
         	myPQE+=line
+        	checkIfUniqueEven(line)
     	}
       else 
       {
-      	println(line)
-
         myPQE+=line
-        checkIfUnique(line)
+        checkIfUniqueEven(line)
         myPQE = myPQE.filterNot(it => it == myPQE.min)
       }}
       count = count + 1
@@ -190,21 +194,63 @@ class Test (aFile:String)
   /**
    * Method that checks if the file input belongs to a category and increments the successes if it does, else creates a
    * new category and places it into a list
+
+  private var myCategoryList:List[Category] = List()
+  private var myOddCategoryList:List[Category] = List()
    */
-  def checkIfUnique(x:String):Unit = {
+  def checkIfUniqueOdd(x:String):Unit = {
     val categoryName = uniqueCategories(x)
 
-    if(!myStringList.contains(categoryName)) {
+    if(!myStringListOdd.contains(categoryName)) {
       val myCategory = new Category()
       myCategory.setName(categoryName)
-      myStringList = myStringList:+categoryName
-      myCategoryList = myCategoryList:+myCategory
+      myStringListOdd = myStringListOdd:+categoryName
+      myOddCategoryList = myOddCategoryList:+myCategory
     }
     else {
-      myCategoryList(myStringList.indexOf(categoryName)).incrementCount()
+      myOddCategoryList(myStringListOdd.indexOf(categoryName)).incrementCount()
     }
   }
 
+   def checkIfUniqueEven(x:String):Unit = {
+    val categoryName = uniqueCategories(x)
+
+    if(!myStringListEven.contains(categoryName)) {
+      val myCategory = new Category()
+      myCategory.setName(categoryName)
+      myStringListEven = myStringListEven:+categoryName
+      myCategoryList = myCategoryList:+myCategory
+    }
+    else {
+      myCategoryList(myStringListEven.indexOf(categoryName)).incrementCount()
+    }
+  }
+  def combineLists(): Unit=
+  {
+  	var countOdd = 0
+  	var countEven = 0
+  	while(countOdd < myOddCategoryList.size)
+  	{
+  		var tempname = myOddCategoryList(countOdd).getName
+  		var tempcount = myOddCategoryList(countOdd).getCount
+  		if(!myStringListEven.contains(tempname))
+  		{
+	      val myCategory = new Category()
+	      myCategory.setName(tempname)
+	      myCategory.setCount(tempcount)
+	      myCategoryList = myCategoryList:+myCategory  			
+  		}
+  		  		
+  		while(countEven < myCategoryList.size)
+  		{
+  			myCategoryList(countEven).compare(myOddCategoryList(countOdd))
+  			countEven += 1
+  		}
+  		countEven = 0
+  		countOdd += 1
+  	}
+
+  }
   /**
    * Method that prints all the values in the binary max heap (tail recursive)
    */
