@@ -3,7 +3,7 @@
  * Main class:      CalculateScores
  * Created by:      Tony on 2/27/15.
  * Authors:         Andrew Baumann, Tony Zheng
- * Modified on:     3/4/2015
+ * Modified on:     3/4/2015-3/7/2015
  * Description:     Given a stream of N data points: (score, category), find the top k points with the highest scores, and
  *                  calculate the rank and statistical significance of categories of the top k points. Stream is the file
  *                  input with score and category separated by a tab, a binary max heap stores the top k data points and
