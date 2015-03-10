@@ -16,6 +16,7 @@
  * Notes:       Concurrent Version
  */
 
+import scala.math.BigDecimal
 import scala.actors.Actor
 import scala.actors.Actor._
 import scala.io.Source
@@ -126,15 +127,15 @@ class Test(aFile:String) {
       }
       count += 1
   	}
+    println(myPQO.size, numK)
+    //var anint = Console.readInt
+
     while(myPQO.size > numK)
     {
       println(myPQO.size)
       minimum = myPQO.min
       myPQO = myPQO.filterNot(it => it == minimum)
     }
-        println(myPQO)
-    var anint = Console.readInt
-
   }
 
   def runEven():Unit = {
@@ -156,6 +157,8 @@ class Test(aFile:String) {
      	}
       populationSize += 1
     }
+    println(myPQE.size, numK)
+    //var anint = Console.readInt
     while(myPQE.size > numK)
     {
       if(myPQE.size < 10)
@@ -165,8 +168,6 @@ class Test(aFile:String) {
       myPQE = myPQE.filterNot(it => it == minimum)
     }
 
-    println(myPQE.size, numK)
-    var anint = Console.readInt
   }
 
   def combineQueues():Unit = {
@@ -320,23 +321,23 @@ class Test(aFile:String) {
    * Method that calculates the hyper-geometric distribution with nested methods that calculates the binomial
    * coefficient and factorial
    */
-  def hypergeometricDistribution(N:Int, K:Int, n:Int, k:Int):Double = {
-    def factorial(number:Int):Double = {
-      def factorialWithAccumulator(accumulator: Double, number: Double): Double = {
-        if(number <= 1) {
-          return accumulator
-        }
-        else {
-          factorialWithAccumulator(accumulator * number, number - 1)
-        }
+  def hypergeometricDistribution(N:Int, K:Int, n:Int, k:Int):BigDecimal = {
+
+    def factorial2(n:BigDecimal,result:BigDecimal):BigDecimal = {
+      if(n == 0) {
+        result
       }
-
-      return factorialWithAccumulator(1, number)
+      else {
+        factorial2(n - 1, n * result)
+      }
     }
 
-    def binomialCoefficient(a:Int, b:Int):Double = {
-      return (factorial(a) / (factorial(b) * factorial(a - b)))
+    def binomialCoefficient(a:BigDecimal, b:BigDecimal):BigDecimal = {
+      return (factorial2(a, 1) / (factorial2(b, 1) * factorial2((a - b),1)))
     }
+
+    println(((binomialCoefficient(K, k) * binomialCoefficient((N - K), (n - k))) / binomialCoefficient(N, n)))
+
 
     return ((binomialCoefficient(K, k) * binomialCoefficient((N - K), (n - k))) / binomialCoefficient(N, n))
   }
