@@ -80,7 +80,6 @@ class Test(aFile:String) {
   	receive {
   		case UniqueEndMessage => count += 1
   	}
-
     combineQueues()
   }
 
@@ -120,13 +119,22 @@ class Test(aFile:String) {
      		   temp += 1
     		}
 			  else {
-          minimum = myPQO.min
+          //minimum = myPQO.min
           checkIfUniqueOdd((line.split('\t')(0).toDouble, line.split('\t')(1)))
-      	  myPQO = myPQO.filterNot(it => it == minimum)
+      	  //myPQO = myPQO.filterNot(it => it == minimum)
       	}
       }
       count += 1
   	}
+    while(myPQO.size > numK)
+    {
+      println(myPQO.size)
+      minimum = myPQO.min
+      myPQO = myPQO.filterNot(it => it == minimum)
+    }
+        println(myPQO)
+    var anint = Console.readInt
+
   }
 
   def runEven():Unit = {
@@ -141,19 +149,31 @@ class Test(aFile:String) {
         	temp += 1
     		}
       	else {
-          minimum = myPQE.min
+          //minimum = myPQE.min
           checkIfUniqueEven((line.split('\t')(0).toDouble, line.split('\t')(1)))
-        	myPQE = myPQE.filterNot(it => it == minimum)
+        	//myPQE = myPQE.filterNot(it => it == minimum)
      		}
      	}
       populationSize += 1
     }
+    while(myPQE.size > numK)
+    {
+      if(myPQE.size < 10)
+        println(myPQE)
+      println(myPQE.size)
+      minimum = myPQE.min
+      myPQE = myPQE.filterNot(it => it == minimum)
+    }
+
+    println(myPQE.size, numK)
+    var anint = Console.readInt
   }
 
   def combineQueues():Unit = {
     combineLists()
     var count:Int = numK
     var temp:Int = 0
+    println(myPQO.size,myPQE.size)
 
     while(temp == 0) {
       if(myPQE.size != 0) {
@@ -168,9 +188,10 @@ class Test(aFile:String) {
         temp = 1
       }
     }
-
-    while(myPQF.size != numK) {
+    println("Peaking")
+    while(myPQF.size > numK) {
       myPQF = myPQF.filterNot(it => it == myPQF.min)
+      println(myPQF.size,numK)
     }
   }
 
