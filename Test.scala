@@ -67,6 +67,7 @@ class Test(aFile:String) {
 
   def run():Unit = 
   {
+    println(fileName)
   	var count:Int = 0
   	val firstActor, secondActor:Readers = new Readers
 
@@ -109,6 +110,7 @@ class Test(aFile:String) {
    * Method that streams the file input and creates the binary max heap of the data points based on their values
    */
   def runOdd():Unit = {
+
     var count, temp:Int = 0
     var minimum:T2 = (0, "")
 
@@ -120,61 +122,55 @@ class Test(aFile:String) {
      		   temp += 1
     		}
 			  else {
-          //minimum = myPQO.min
+          minimum = myPQO.min
           checkIfUniqueOdd((line.split('\t')(0).toDouble, line.split('\t')(1)))
-      	  //myPQO = myPQO.filterNot(it => it == minimum)
+      	  myPQO = myPQO.filterNot(it => it == minimum)
       	}
       }
       count += 1
   	}
-    println(myPQO.size, numK)
-    //var anint = Console.readInt
 
     while(myPQO.size > numK)
     {
-      println(myPQO.size)
       minimum = myPQO.min
       myPQO = myPQO.filterNot(it => it == minimum)
     }
+
   }
 
   def runEven():Unit = {
-    var temp:Int = 0;
+    var temp, counter:Int = 0;
     var minimum:T2 = (0, "")
 
+
     for(line <- Source.fromFile(fileName).getLines()) {
-  	 	if(populationSize % 2 == 0) {
+      if(populationSize % 2 == 0) {
   	 	  myPQE.enqueue((line.split('\t')(0).toDouble, line.split('\t')(1)))
         if(temp <= numK) {
           checkIfUniqueEven((line.split('\t')(0).toDouble, line.split('\t')(1)))
         	temp += 1
     		}
       	else {
-          //minimum = myPQE.min
+          minimum = myPQE.min
           checkIfUniqueEven((line.split('\t')(0).toDouble, line.split('\t')(1)))
-        	//myPQE = myPQE.filterNot(it => it == minimum)
+        	myPQE = myPQE.filterNot(it => it == minimum)
      		}
      	}
       populationSize += 1
+      counter += 1
     }
-    println(myPQE.size, numK)
-    //var anint = Console.readInt
+
     while(myPQE.size > numK)
     {
-      if(myPQE.size < 10)
-        println(myPQE)
-      println(myPQE.size)
       minimum = myPQE.min
       myPQE = myPQE.filterNot(it => it == minimum)
     }
-
   }
 
   def combineQueues():Unit = {
     combineLists()
     var count:Int = numK
     var temp:Int = 0
-    println(myPQO.size,myPQE.size)
 
     while(temp == 0) {
       if(myPQE.size != 0) {
@@ -189,10 +185,8 @@ class Test(aFile:String) {
         temp = 1
       }
     }
-    println("Peaking")
     while(myPQF.size > numK) {
       myPQF = myPQF.filterNot(it => it == myPQF.min)
-      println(myPQF.size,numK)
     }
   }
 
@@ -257,8 +251,9 @@ class Test(aFile:String) {
   /**
    * Method that prints all the values in the binary max heap (tail recursive)
    */
-  def printAll(myHeap:PriorityQueue[T2]):Unit = {
-    printPQ(myHeap)
+  /*
+  def printAll():Unit = {
+    printPQ(myPQF)
 
     def printPQ(it:PriorityQueue[T2]):Unit = {
       if (it.isEmpty) {
@@ -266,6 +261,22 @@ class Test(aFile:String) {
       }
 
       println(it.head._1)
+      printPQ(it.tail)
+    }
+    println()
+  }
+  */
+
+  def getTopK():Unit = {
+    println("The top k datapoints are: ")
+    printPQ(myPQF)
+
+    def printPQ(it:PriorityQueue[T2]):Unit = {
+      if (it.isEmpty) {
+        return
+      }
+
+      println(it.head._2 + " - " + it.head._1)
       printPQ(it.tail)
     }
     println()
@@ -306,14 +317,14 @@ class Test(aFile:String) {
    */
   def getStats():Unit = {
     for(x <- myCategoryList) {
-      println("FOR: " + x.getName())
-      println("Population size is: " + populationSize)
-      println("Total success states in population is: " + x.getCount())
-      println("Number of draws is: " + draws)
-      println("Number of draws in top " + numK + " is: " + getSuccesses(x))
+      //println("FOR: " + x.getName())
+      //println("Population size is: " + populationSize)
+      //println("Total success states in population is: " + x.getCount())
+      //println("Number of draws is: " + draws)
+      //println("Number of draws in top " + numK + " is: " + getSuccesses(x))
       x.setHypergeometricDistribution(hypergeometricDistribution(populationSize, x.getCount(), draws, getSuccesses(x)))
-      println("Hypergeometric distribution is: " + x.getHypergeometricDistribution())
-      println()
+      //println("Hypergeometric distribution is: " + x.getHypergeometricDistribution())
+      //println()
     }
   }
 
@@ -323,22 +334,18 @@ class Test(aFile:String) {
    */
   def hypergeometricDistribution(N:Int, K:Int, n:Int, k:Int):BigDecimal = {
 
-    def factorial2(n:BigDecimal,result:BigDecimal):BigDecimal = {
+    def factorial(n:BigDecimal,result:BigDecimal):BigDecimal = {
       if(n == 0) {
         result
       }
       else {
-        factorial2(n - 1, n * result)
+        factorial(n - 1, n * result)
       }
     }
 
     def binomialCoefficient(a:BigDecimal, b:BigDecimal):BigDecimal = {
-      return (factorial2(a, 1) / (factorial2(b, 1) * factorial2((a - b),1)))
+      return (factorial(a, 1) / (factorial(b, 1) * factorial((a - b),1)))
     }
-
-    println(((binomialCoefficient(K, k) * binomialCoefficient((N - K), (n - k))) / binomialCoefficient(N, n)))
-
-
     return ((binomialCoefficient(K, k) * binomialCoefficient((N - K), (n - k))) / binomialCoefficient(N, n))
   }
 
@@ -348,7 +355,7 @@ class Test(aFile:String) {
   implicit def IntIntLessThan(x:Category, y:Category) = {
     x.getHypergeometricDistribution() > y.getHypergeometricDistribution()
   }
-
+  
   def mergeSort[T](xs:List[T])(implicit pred:(T, T) => Boolean):List[T] = {
     val m = xs.length / 2
 
