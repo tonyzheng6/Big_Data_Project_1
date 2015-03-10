@@ -13,7 +13,7 @@
  * Build with:  Scala IDE (Eclipse or IntelliJ) or using the following commands on the glab machines
  *              To compile: scalac *.scala // this doesn't work on glab but it should
  *              To run:     scala CalculateScores input.txt // the above doesn't work so this wouldn't either
- * Notes:       Non-concurrent version
+ * Notes:       Concurrent version
  */
 
 object CalculateScores 
@@ -26,11 +26,9 @@ object CalculateScores
   {
     val myTest = new Test(args(0))
     myTest.getK()
-    myTest.superRun()
-
-    myTest.printAll()
-    myTest.printCategories()
-    
+    myTest.run()
+    //myTest.printAll()
+    //myTest.printCategories()
     myTest.getStats()
     myTest.sortList()
   }
