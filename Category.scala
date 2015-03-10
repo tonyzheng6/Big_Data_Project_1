@@ -13,7 +13,7 @@
  * Build with:  Scala IDE (Eclipse or IntelliJ) or using the following commands on the glab machines
  *              To compile: scalac *.scala // this doesn't work on glab but it should
  *              To run:     scala CalculateScores input.txt // the above doesn't work so this wouldn't either
- * Notes:       Non-concurrent version
+ * Notes:       Concurrent version
  */
 
 class Category {
@@ -28,12 +28,13 @@ class Category {
     this.name = name
   }
 
-  def <=(other:Category): Boolean = 
-  {
-  	if (this.hypergeometricDistribution <= other.hypergeometricDistribution)
-  		return true
-  	else
-  		return false
+  def <=(other:Category):Boolean = {
+  	if(this.hypergeometricDistribution <= other.hypergeometricDistribution) {
+      return true
+    }
+  	else {
+      return false
+    }
   }
 
   /**
@@ -58,8 +59,7 @@ class Category {
   }
 
   def compare(other:Category) = {
-  	if (other.name == this.name)
-  	{
+  	if(other.name == this.name) {
   		this.count += other.count
   	}
   }
@@ -82,6 +82,6 @@ class Category {
    * Method to increment count
    */
   def incrementCount():Unit = {
-    count+=1
+    count += 1
   }
 }
