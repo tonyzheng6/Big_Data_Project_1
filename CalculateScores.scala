@@ -27,6 +27,7 @@ object CalculateScores
     val myTest = new Test(args(0))
     myTest.getK()
     myTest.run()
+    myTest.getTopK()
     //myTest.printAll()
     //myTest.printCategories()
     myTest.getStats()
