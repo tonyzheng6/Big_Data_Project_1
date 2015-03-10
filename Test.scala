@@ -13,7 +13,7 @@
  * Build with:  Scala IDE (Eclipse or IntelliJ) or using the following commands on the glab machines
  *              To compile: scalac *.scala // this doesn't work on glab but it should
  *              To run:     scala CalculateScores input.txt // the above doesn't work so this wouldn't either
- * Notes:       Non-concurrent version
+ * Notes:       Concurrent Version
  */
 
 import scala.actors.Actor
@@ -22,35 +22,28 @@ import scala.io.Source
 import scala.collection.mutable._
 case object ReaderMessageOdd
 case object ReaderMessageEven
+case object UniqueEndMessage
 
-class Test (aFile:String) 
-{
-  private var myPQE = PriorityQueue[String]()(Ordering.by(doThis))
-  private var myPQO = PriorityQueue[String]()(Ordering.by(doThis))
-  private var myPQF = PriorityQueue[String]()(Ordering.by(doThis))
-  private var numK:Int = 0
-  private var populationSize:Int = 0
-  private var draws:Int = 0
-  private var myCategoryList:List[Category] = List()
-  private var myOddCategoryList:List[Category] = List()
-  private var myEvenCategoryList:List[Category] = List()
-
-  private var myStringListEven:List[String] = List()
-  private var myStringListOdd:List[String] = List()
-
+class Test(aFile:String) {
+  private type T2 = Tuple2[Double, String]
+  private var myPQE, myPQO, myPQF = PriorityQueue[T2]()(Ordering.by(doThis))
+  private var numK, populationSize, draws:Int = 0
+  private var myCategoryList, myOddCategoryList, myEvenCategoryList:List[Category] = List()
+  private var myStringListOdd, myStringListEven:List[String] = List()
   private val fileName = aFile
+
   /**
    * Method that splits a string seperated by a tab, converts the first part to a double and returns it
    */
-  def doThis(x:String):Double = {
-    return ((x.split('\t')(0)).toDouble)
+  def doThis(x:T2):Double = {
+    return x._1
   }
 
   /**
    * Method that splits a string seperated by a tab, and returns the second part of the string
    */
-  def uniqueCategories(x:String):String = {
-    return (x.split('\t')(1))
+  def uniqueCategories(x:T2):String = {
+    return x._2
   }
 
   /**
@@ -67,217 +60,190 @@ class Test (aFile:String)
       case e: Exception => println("Exception caught: " + e)
         getK()
     }
+
+    println()
   }
 
-  def superRun():Unit = 
+  def run():Unit = 
   {
-  	var count = 0
-  	val fhalf_actor = new Readers
-  	val shalf_actor = new Readers
-  	fhalf_actor.start
-  	shalf_actor.start
-  	fhalf_actor ! ReaderMessageEven
-  	shalf_actor ! ReaderMessageOdd
+  	var count:Int = 0
+  	val firstActor, secondActor:Readers = new Readers
 
-  	receive 
-  	{
-  		case UniqueEndMessage => count+=1
+  	firstActor.start
+  	secondActor.start
+  	firstActor ! ReaderMessageEven
+  	secondActor ! ReaderMessageOdd
+
+    receive {
+  		case UniqueEndMessage => count += 1
   	}
-  	receive
-  	{
-  		case UniqueEndMessage => count+=1
+  	receive {
+  		case UniqueEndMessage => count += 1
   	}
-  	combineQueues()
+
+    combineQueues()
   }
 
-    class Readers extends Actor 
-	{
-		def act
-		{
-		while (true) 
-		{
-			receive
-			{
-				case ReaderMessageEven => 
-				runEven()
-				reply { UniqueEndMessage }
-				exit()
-				case ReaderMessageOdd =>
-				runOdd()
-				reply { UniqueEndMessage }
-				exit()
-				/*
-				TODO: check to see what wait does
-				how do i get the program to wait for the
-				actors to finish what they
-				*/
-			}
-		}}
-	} 
+  class Readers extends Actor {
+		def act {
+  		while (true) {
+			  receive {
+				  case ReaderMessageEven =>
+				    runEven()
+				    reply {
+              UniqueEndMessage
+            }
+				    exit()
+				  case ReaderMessageOdd =>
+            runOdd()
+				    reply {
+              UniqueEndMessage
+            }
+            exit()
+        }
+      }
+    }
+  }
 
   /**
    * Method that streams the file input and creates the binary max heap of the data points based on their values
    */
+  def runOdd():Unit = {
+    var count, temp:Int = 0
+    var minimum:T2 = (0, "")
 
-   def combineQueues():Unit = 
-   {
-   	combineLists()
-   	var count = numK
-   	var temp = 0
-   	while(temp == 0)
-   	{
-   		if(myPQE.size != 0)
-   		{
-   			var eventemp = myPQE.dequeue
-   			myPQF += eventemp
-   		}
-   		else if(myPQO.size != 0)
-   		{
-   			var oddtemp = myPQO.dequeue
-   			myPQF += oddtemp
-   		}
-   		else
-   			temp = 1
-   	}
-   	while(myPQF.size != numK)
-   	{
-      myPQF = myPQF.filterNot(it => it == myPQF.min)
-    }
-   }
-
-  def runOdd():Unit = 
-  {
-    var count = 0;
-    var temp = 0;
- 	for(line <- Source.fromFile(fileName).getLines()) 
-  	{ 
-  	 	if (count % 2 == 1)
-  	 	{
-  	 	//	println("odd:", line)
-     	   if(temp <= numK) 
-     	   {
-     		   	myPQO+=line
-     		   	checkIfUniqueOdd(line)
-     		   	temp+=1
+    for(line <- Source.fromFile(fileName).getLines()) {
+  	 	if (count % 2 == 1) {
+        myPQO.enqueue((line.split('\t')(0).toDouble, line.split('\t')(1)))
+        if(temp <= numK) {
+           checkIfUniqueOdd((line.split('\t')(0).toDouble, line.split('\t')(1)))
+     		   temp += 1
     		}
-			else 
-        	{
-        		println(line)
-       		  myPQO += line
-       		  checkIfUniqueOdd(line)
-      		  myPQO = myPQO.filterNot(it => it == myPQO.min)
-      		}
+			  else {
+          minimum = myPQO.min
+          checkIfUniqueOdd((line.split('\t')(0).toDouble, line.split('\t')(1)))
+      	  myPQO = myPQO.filterNot(it => it == minimum)
       	}
-      count = count + 1
+      }
+      count += 1
   	}
   }
 
-    def runEven():Unit = 
-    {
-   	 var temp = 0;
- 	 for(line <- Source.fromFile(fileName).getLines()) 
-  	 { 
-  	 	if(populationSize % 2 == 0)
-  	 	{
-  	 	//	println("even:", line)  	 		
-        	if(temp <= numK) 
-       		{
-       	 		myPQE+=line
-        		checkIfUniqueEven(line)
-        		temp+=1
+  def runEven():Unit = {
+    var temp:Int = 0;
+    var minimum:T2 = (0, "")
+
+    for(line <- Source.fromFile(fileName).getLines()) {
+  	 	if(populationSize % 2 == 0) {
+  	 	  myPQE.enqueue((line.split('\t')(0).toDouble, line.split('\t')(1)))
+        if(temp <= numK) {
+          checkIfUniqueEven((line.split('\t')(0).toDouble, line.split('\t')(1)))
+        	temp += 1
     		}
-      		else 
-     		{
-        	myPQE+=line
-        	checkIfUniqueEven(line)
-        	myPQE = myPQE.filterNot(it => it == myPQE.min)
-      		}
-      	}
-      populationSize+=1
+      	else {
+          minimum = myPQE.min
+          checkIfUniqueEven((line.split('\t')(0).toDouble, line.split('\t')(1)))
+        	myPQE = myPQE.filterNot(it => it == minimum)
+     		}
+     	}
+      populationSize += 1
+    }
+  }
+
+  def combineQueues():Unit = {
+    combineLists()
+    var count:Int = numK
+    var temp:Int = 0
+
+    while(temp == 0) {
+      if(myPQE.size != 0) {
+        var eventemp = myPQE.dequeue
+        myPQF += eventemp
       }
-  	}
+      else if(myPQO.size != 0) {
+        var oddtemp = myPQO.dequeue
+        myPQF += oddtemp
+      }
+      else {
+        temp = 1
+      }
+    }
 
-
+    while(myPQF.size != numK) {
+      myPQF = myPQF.filterNot(it => it == myPQF.min)
+    }
+  }
 
   /**
    * Method that checks if the file input belongs to a category and increments the successes if it does, else creates a
    * new category and places it into a list
-
-  private var myCategoryList:List[Category] = List()
-  private var myOddCategoryList:List[Category] = List()
+   * private var myCategoryList:List[Category] = List()
+   * private var myOddCategoryList:List[Category] = List()
    */
-  def checkIfUniqueOdd(x:String):Unit = {
-    val categoryName = uniqueCategories(x)
+  def checkIfUniqueOdd(x:T2):Unit = {
+    val categoryName = x._2
 
     if(!myStringListOdd.contains(categoryName)) {
       val myCategory = new Category()
       myCategory.setName(categoryName)
-      myStringListOdd = myStringListOdd:+categoryName
-      myOddCategoryList = myOddCategoryList:+myCategory
+      myStringListOdd = myStringListOdd :+ categoryName
+      myOddCategoryList = myOddCategoryList :+ myCategory
     }
     else {
       myOddCategoryList(myStringListOdd.indexOf(categoryName)).incrementCount()
     }
   }
 
-   def checkIfUniqueEven(x:String):Unit = {
-    val categoryName = uniqueCategories(x)
+  def checkIfUniqueEven(x:T2):Unit = {
+    val categoryName:String = x._2
 
     if(!myStringListEven.contains(categoryName)) {
       val myCategory = new Category()
       myCategory.setName(categoryName)
-      myStringListEven = myStringListEven:+categoryName
-      myCategoryList = myCategoryList:+myCategory
+      myStringListEven = myStringListEven :+ categoryName
+      myCategoryList = myCategoryList :+ myCategory
     }
     else {
       myCategoryList(myStringListEven.indexOf(categoryName)).incrementCount()
     }
   }
-  def combineLists(): Unit=
-  {
-  	var countOdd = 0
-  	var countEven = 0
-  	while(countOdd < myOddCategoryList.size)
-  	{
+
+  def combineLists():Unit = {
+  	var countOdd, countEven:Int = 0
+
+  	while(countOdd < myOddCategoryList.size) {
   		var tempname = myOddCategoryList(countOdd).getName
   		var tempcount = myOddCategoryList(countOdd).getCount
-  		if(!myStringListEven.contains(tempname))
-  		{
+
+      if(!myStringListEven.contains(tempname)) {
 	      val myCategory = new Category()
 	      myCategory.setName(tempname)
 	      myCategory.setCount(tempcount)
-	      myCategoryList = myCategoryList:+myCategory  	
-	      println(tempname,tempcount)		
+	      myCategoryList = myCategoryList :+ myCategory  	
   		}
-  		else{  		  		
-  		while(countEven < myCategoryList.size)
-  		{
-  			myCategoryList(countEven).compare(myOddCategoryList(countOdd))
-  			countEven += 1
-  		}}
+  		else {
+  		  while(countEven < myCategoryList.size) {
+  		  	myCategoryList(countEven).compare(myOddCategoryList(countOdd))
+  		  	countEven += 1
+  		  }
+      }
   		countEven = 0
   		countOdd += 1
   	}
-
   }
+
   /**
    * Method that prints all the values in the binary max heap (tail recursive)
    */
-  def printAll():Unit= 
-  {
-  	println("My results: Even")
-    printPQ(myPQE)
-  	println("My results: Odd")
-    printPQ(myPQO)
-    println("My results: Final")
-    printPQ(myPQF)
+  def printAll(myHeap:PriorityQueue[T2]):Unit = {
+    printPQ(myHeap)
 
-    def printPQ(it:PriorityQueue[String]):Unit = {
+    def printPQ(it:PriorityQueue[T2]):Unit = {
       if (it.isEmpty) {
         return
       }
 
-      println(it.head)
+      println(it.head._1)
       printPQ(it.tail)
     }
     println()
@@ -296,8 +262,7 @@ class Test (aFile:String)
    * Method that gets the number of successes in the top k data points that belong to a category (tail recursive)
    */
   def getSuccesses(x:Category):Int = {
-
-    def traversePQ(it:PriorityQueue[String], counter:Int):Int = {
+    def traversePQ(it:PriorityQueue[T2], counter:Int):Int = {
       if(it.isEmpty) {
         return counter
       }
@@ -316,8 +281,7 @@ class Test (aFile:String)
    * Method that prints out the statistical significance of each of the categories there are
    */
   def getStats():Unit = {
-    for(x <- myCategoryList)
-    {
+    for(x <- myCategoryList) {
       println("FOR: " + x.getName())
       println("Population size is: " + populationSize)
       println("Total success states in population is: " + x.getCount())
@@ -334,9 +298,9 @@ class Test (aFile:String)
    * coefficient and factorial
    */
   def hypergeometricDistribution(N:Int, K:Int, n:Int, k:Int):Double = {
-    def factorial(number:Int):Int = {
-      def factorialWithAccumulator(accumulator: Int, number: Int): Int = {
-        if (number <= 1) {
+    def factorial(number:Int):Double = {
+      def factorialWithAccumulator(accumulator: Double, number: Double): Double = {
+        if(number <= 1) {
           return accumulator
         }
         else {
@@ -369,17 +333,17 @@ class Test (aFile:String)
     }
     else {
       def merge(ls:List[T], rs:List[T], acc:List[T] = List()):List[T] = (ls, rs) match {
-        case (Nil, _) => acc ++ rs
-        case (_, Nil) => acc ++ ls
-        case (l :: ls1, r :: rs1) =>
-          if (pred(l, r)) {
+        case(Nil, _) => acc ++ rs
+        case(_, Nil) => acc ++ ls
+        case(l :: ls1, r :: rs1) =>
+          if(pred(l, r)) {
             merge(ls1, rs, acc :+ l)
           }
           else {
             merge(ls, rs1, acc :+ r)
           }
       }
-      val (l, r) = xs splitAt m
+      val(l, r) = xs splitAt m
       merge(mergeSort(l), mergeSort(r))
     }
   }
@@ -390,55 +354,47 @@ class Test (aFile:String)
   def sortList():Unit = {
     myOddCategoryList = myCategoryList.take(myCategoryList.size/2)
     myEvenCategoryList = myCategoryList.drop(myCategoryList.size/2)
-    println(myEvenCategoryList)
-    //myOddCategoryList = myCategoryList.splitAt(myCategoryList.size/2)(0)
-    val hlactor = new Sorter
-    val blactor = new Sorter
+    //println(myEvenCategoryList)
+    val hlactor, blactor = new Sorter
     hlactor.start
     blactor.start
     hlactor ! ReaderMessageOdd
     blactor ! ReaderMessageEven
 
-    receive 
-    {
+    receive {
       case UniqueEndMessage => 
     }
-    receive
-    {
+    receive {
       case UniqueEndMessage => 
     }
 
     combineLists()
     mergeSort(myCategoryList)
-    for(x <- myCategoryList)
-    {
-      println(x.getName() + " Geometric : " + x.getHypergeometricDistribution())
-    }
 
+    println("Hypergeometric distribution for all categories in sorted order: ")
+    for(x <- myCategoryList) {
+      println("\t" + x.getName() + " Hypergeometric distribution : " + x.getHypergeometricDistribution())
+    }
   }
 
-    class Sorter extends Actor 
-  {
-    def act
-    {
-    while (true) 
-    {
-      receive
-      {
-        case ReaderMessageEven => 
-        mergeSort(myEvenCategoryList)
-        reply { UniqueEndMessage }
-        exit()
-        case ReaderMessageOdd =>
-        mergeSort(myOddCategoryList)
-        reply { UniqueEndMessage }
-        exit()
-        /*
-        TODO: check to see what wait does
-        how do i get the program to wait for the
-        actors to finish what they
-        */
+  class Sorter extends Actor {
+    def act {
+      while(true) {
+        receive {
+          case ReaderMessageEven =>
+            mergeSort(myEvenCategoryList)
+            reply {
+              UniqueEndMessage
+            }
+            exit()
+          case ReaderMessageOdd =>
+            mergeSort(myOddCategoryList)
+            reply {
+              UniqueEndMessage
+            }
+            exit()
+        }
       }
-    }}
+    }
   }
 }
