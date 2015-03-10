@@ -256,6 +256,8 @@ class Test(aFile:String) {
     for(x <- myCategoryList){
       println(x.getName() + ": " + x.getCount())
     }
+
+    println()
   }
 
   /**
@@ -354,7 +356,6 @@ class Test(aFile:String) {
   def sortList():Unit = {
     myOddCategoryList = myCategoryList.take(myCategoryList.size/2)
     myEvenCategoryList = myCategoryList.drop(myCategoryList.size/2)
-    //println(myEvenCategoryList)
     val hlactor, blactor = new Sorter
     hlactor.start
     blactor.start
@@ -369,11 +370,11 @@ class Test(aFile:String) {
     }
 
     combineLists()
-    mergeSort(myCategoryList)
+    myCategoryList = mergeSort(myCategoryList)
 
     println("Hypergeometric distribution for all categories in sorted order: ")
     for(x <- myCategoryList) {
-      println("\t" + x.getName() + " Hypergeometric distribution : " + x.getHypergeometricDistribution())
+      println(x.getName() + " Geometric : " + x.getHypergeometricDistribution())
     }
   }
 
@@ -382,13 +383,13 @@ class Test(aFile:String) {
       while(true) {
         receive {
           case ReaderMessageEven =>
-            mergeSort(myEvenCategoryList)
+            myEvenCategoryList = mergeSort(myEvenCategoryList)
             reply {
               UniqueEndMessage
             }
             exit()
           case ReaderMessageOdd =>
-            mergeSort(myOddCategoryList)
+            myOddCategoryList = mergeSort(myOddCategoryList)
             reply {
               UniqueEndMessage
             }
