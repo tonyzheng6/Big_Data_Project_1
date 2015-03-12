@@ -1,6 +1,5 @@
 /**
  * Title:       CalculateScores.scala
- * Created by:  Tony on 2/27/15.
  * Authors:     Andrew Baumann, Tony Zheng
  * Modified on: 3/4/2015
  * Description: Given a stream of N data points: (score, category), find the top k points with the highest scores, and
@@ -11,8 +10,8 @@
  *              geometric distribution is calculated for each category and merge sort is used to sort the categories
  *              based on the hyper-geometric distribution from highest to lowest.
  * Build with:  Scala IDE (Eclipse or IntelliJ) or using the following commands on the glab machines
- *              To compile: scalac *.scala // this doesn't work on glab but it should
- *              To run:     scala CalculateScores input.txt // the above doesn't work so this wouldn't either
+ *              To compile: scalac *.scala 
+ *              To run:     scala CalculateScores input.txt
  * Notes:       Concurrent version
  */
 
@@ -27,7 +26,7 @@ object CalculateScores
     val myTest = new Test(args(0))
     myTest.getK()
     myTest.run()
-    myTest.getTopK()
+    //myTest.getTopK()
     //myTest.printAll()
     //myTest.printCategories()
     myTest.getStats()
