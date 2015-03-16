@@ -1,0 +1,21 @@
+CSCI 493 Big Data Project 1
+
+Files included: CalculateScores.scala, Test.scala, Category.scala, HyperGeometricDistribution.scala, Merge.scala
+ 
+Authors: Andrew Baumann, Tony Zheng
+
+Modified on: 3/14/2015 (Happy Pi day!)
+
+Description: Given a stream of N data points: (score, category), find the top k points with the highest scores, and calculate the rank and statistical significance of categories of the top k points. Stream is the file input with score and category separated by a tab, a binary max heap stores the top k data points and stores the information pertaining to population size, success states in population, number of draws, and the number of successes in the top k data points. Once those values have been gathered, the hyper-geometric distribution is calculated for each category and merge sort is used to sort the categories based on the hyper-geometric distribution from highest to lowest
+
+To compile: scalac *.scala
+
+To run: scala CalculateScores input.txt
+
+Notes: Concurrent version with modularity and simplified calculation of binomial distribution.
+
+Concurrency model: 
+For the concurrency requirement, we implemented actors for many parts of the project. Starting off with parsing the file, there are 4 actors that parse the file via modulo (Ex. actor 1 will have lineNumber mod 4 = 0, actor 2 will have lineNumber mod 4 = 1, actor 3 will have lineNumber mod 4 = 2, and actor 4 will have lineNumber mod 3). 
+For each actor reading the lines of the file concurrently, they check if the category has already been listed and if not, they simply increment the time that category has appeared. Each actor has its own binary max heap of size k and as soon as it reaches k elements, it removes the item of smallest priority based on the data point’s score. Once the actors have finished parsing the file, the heaps are conformed into one heap that contains the top k data points via the same method for the individual heaps. 
+The second instance of concurrency is calculating the hyper-geometric distribution for each of the categories. According to the formula given in the lecture, the hyper-geometric distribution is composed of 3 binomial coefficients and so there are 3 actors to calculate them. Within calculating the binomial coefficient, there are 3 factorial computations, however, rather than having 3 actors calculate the factorials, we simplified it down so that the factorial on the bottom could cancel out with some of the computations in the factorial on top, making it so that there are only 2 factorial computations performed. 
+The third instance of concurrency was for merge sort. There are 2 actors, one to take the first half of the list of categories, and the other that takes the remaining half of the list. Each actor will perform merge sort on their respective list and then compiled into one sorted list based on their hyper-geometric distribution. 
